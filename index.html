@@ -3,60 +3,113 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#14131a">
+<meta name="theme-color" content="#faf7fd" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14121c" media="(prefers-color-scheme: dark)">
 <title>Tether</title>
 <link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="image.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Anchor">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
+<script>
+// Apply saved theme (or system default) before first paint to avoid a flash.
+(function () {
+  try {
+    var saved = localStorage.getItem('tether-theme');
+    if (saved === 'light' || saved === 'dark') {
+      document.documentElement.setAttribute('data-theme', saved);
+    }
+  } catch (e) {}
+})();
+</script>
 <style>
 :root {
   color-scheme: light dark;
 
-  /* LIGHT */
-  --bg: #f8f6fb;
+  /* LIGHT — palette sampled from image.png (pink → purple swirl) */
+  --bg: #faf7fd;
   --surface: #ffffff;
-  --surface-2: #f2eef8;
+  --surface-2: #f4eefb;
 
-  --ink: #1f1b2d;
-  --ink-dim: #726b83;
+  --ink: #211b2e;
+  --ink-dim: #6f6685;
 
-  --gold: #d78b63;
-  --gold-dim: #f5e6dc;
+  /* accent (primary) = purple from the swirl */
+  --gold: #8b46f0;
+  --gold-dim: #efe6fd;
 
-  --sage: #8da59d;
-  --sage-dim: #dce8e4;
+  /* secondary accent = pink from the swirl */
+  --sage: #ec4f9c;
+  --sage-dim: #fde4f1;
 
-  --rust: #d97d5b;
-  --line: #e8e2ef;
+  --rust: #e5695a;
+  --line: #ece3f6;
+
+  --brand-grad: linear-gradient(135deg, #fc94a3, #ec79cd, #a063f5);
 
   --radius: 20px;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
 
-    --bg:#14131a;
-    --surface:#1c1a24;
-    --surface-2:#242130;
+    --bg:#14121c;
+    --surface:#1c1926;
+    --surface-2:#241f33;
 
-    --ink:#f2ede4;
-    --ink-dim:#948da3;
+    --ink:#f2ecf7;
+    --ink-dim:#948aa8;
 
-    --gold:#d4a574;
-    --gold-dim:#3a3226;
+    /* accent (primary) = lighter purple for contrast on dark */
+    --gold:#b98cff;
+    --gold-dim:#2c2340;
 
-    --sage:#8aa792;
-    --sage-dim:#293029;
+    /* secondary accent = pink */
+    --sage:#f472b6;
+    --sage-dim:#3a2233;
 
-    --rust:#b5654a;
-    --line:#302d3a;
+    --rust:#d1705c;
+    --line:#302a3f;
+
+    --brand-grad: linear-gradient(135deg, #fc94a3, #ec79cd, #a063f5);
   }
+}
+
+/* Manual override — forces dark regardless of system setting */
+:root[data-theme="dark"] {
+  --bg:#14121c;
+  --surface:#1c1926;
+  --surface-2:#241f33;
+
+  --ink:#f2ecf7;
+  --ink-dim:#948aa8;
+
+  --gold:#b98cff;
+  --gold-dim:#2c2340;
+
+  --sage:#f472b6;
+  --sage-dim:#3a2233;
+
+  --rust:#d1705c;
+  --line:#302a3f;
+
+  --brand-grad: linear-gradient(135deg, #fc94a3, #ec79cd, #a063f5);
 }  
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--ink);
-    font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+    font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+    transition:background .25s ease,color .25s ease;}
+  #themeToggle{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:14px;z-index:50;
+    width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);
+    color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;
+    font-size:17px;line-height:1;box-shadow:0 2px 10px rgba(0,0,0,.08);
+    transition:background .2s ease,border-color .2s ease,transform .15s ease;}
+  #themeToggle:hover{border-color:var(--gold);}
+  #themeToggle:active{transform:scale(.92);}
   .frame{max-width:430px;margin:0 auto;min-height:100vh;padding:28px 20px 110px;position:relative;}
   .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim);margin:0 0 2px;}
   h1{font-family:'Fraunces',serif;font-weight:500;font-size:28px;margin:0 0 22px;letter-spacing:-.01em;}
@@ -89,7 +142,7 @@
     border-top:none;position:relative;overflow:hidden;background:var(--surface-2);}
   .vessel .liquid{position:absolute;bottom:0;left:0;width:100%;
     transition:height .7s cubic-bezier(.22,1,.36,1);border-radius:0 0 12px 12px;
-    background:linear-gradient(180deg,#e7c197,var(--gold));}
+    background:linear-gradient(180deg,var(--sage),var(--gold));}
   .vessel-label{margin-top:10px;font-size:12px;color:var(--ink-dim);font-weight:600;}
   .vessel-amt{font-family:'Fraunces',serif;font-size:20px;margin-top:2px;}
 
@@ -191,12 +244,58 @@
 </style>
 </head>
 <body>
+<button id="themeToggle" type="button" aria-label="Toggle light or dark mode" title="Toggle theme">🌙</button>
 <div class="frame" id="frame">
   <div class="spin" id="loading">Loading…</div>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
+// ============================================================
+// THEME TOGGLE — light / dark with manual override + system default.
+// ============================================================
+(function () {
+  var root = document.documentElement;
+  var btn = document.getElementById('themeToggle');
+  var media = window.matchMedia('(prefers-color-scheme: dark)');
+
+  function stored() {
+    try { return localStorage.getItem('tether-theme'); } catch (e) { return null; }
+  }
+  function effectiveTheme() {
+    var s = stored();
+    if (s === 'light' || s === 'dark') return s;
+    return media.matches ? 'dark' : 'light';
+  }
+  function paint() {
+    var t = effectiveTheme();
+    // Icon shows the mode you'd switch TO.
+    btn.textContent = t === 'dark' ? '☀️' : '🌙';
+    btn.setAttribute('aria-label', t === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+    var meta = document.querySelector('meta[name="theme-color"]:not([media])') || (function () {
+      var m = document.createElement('meta');
+      m.name = 'theme-color';
+      document.head.appendChild(m);
+      return m;
+    })();
+    meta.setAttribute('content', t === 'dark' ? '#14121c' : '#faf7fd');
+  }
+
+  btn.addEventListener('click', function () {
+    var next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+    try { localStorage.setItem('tether-theme', next); } catch (e) {}
+    root.setAttribute('data-theme', next);
+    paint();
+  });
+
+  // If the user hasn't chosen manually, follow system changes live.
+  media.addEventListener('change', function () {
+    if (!stored()) { root.removeAttribute('data-theme'); paint(); }
+  });
+
+  paint();
+})();
+
 // ============================================================
 // CONFIG — pulled from config.js (see config.example.js for the template).
 // Run schema.sql once in the Supabase SQL editor before first use.
