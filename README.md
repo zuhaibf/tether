@@ -1,4 +1,4 @@
-# Anchor — setup
+# Tether — setup
 
 ## 1. Supabase project
 1. Create a new Supabase project (separate from budget/75hard — keeps this data isolated).
