@@ -217,7 +217,7 @@ async function loadProfile(){
 // ============================================================
 function renderAuth(){
   frame.innerHTML = `
-    <p class="eyebrow">Anchor</p>
+    <p class="eyebrow">Tether</p>
     <h1>We're keeping<br>each other honest.</h1>
     <div id="authForm">
       <label>Display name</label>
@@ -302,7 +302,7 @@ async function renderWaiting(){
   frame.innerHTML = `
     <p class="eyebrow">Waiting</p>
     <h1>Share this code.</h1>
-    <p class="sub">Send it to your partner — once they enter it, you'll both land on Anchor together.</p>
+    <p class="sub">Send it to your partner — once they enter it, you'll both land on Tether together.</p>
     <div class="code-box">${esc(code || '——————')}</div>
     <button class="btn ghost" id="wRefresh">I've sent it — check again</button>
     <button class="link-btn" id="wSignOut">Sign out</button>
