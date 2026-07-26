@@ -103,13 +103,6 @@
   body{margin:0;background:var(--bg);color:var(--ink);
     font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;
     transition:background .25s ease,color .25s ease;}
-  #themeToggle{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:14px;z-index:50;
-    width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);
-    color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;
-    font-size:17px;line-height:1;box-shadow:0 2px 10px rgba(0,0,0,.08);
-    transition:background .2s ease,border-color .2s ease,transform .15s ease;}
-  #themeToggle:hover{border-color:var(--gold);}
-  #themeToggle:active{transform:scale(.92);}
   .frame{max-width:430px;margin:0 auto;min-height:100vh;padding:28px 20px 110px;position:relative;}
   .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim);margin:0 0 2px;}
   h1{font-family:'Fraunces',serif;font-weight:500;font-size:28px;margin:0 0 22px;letter-spacing:-.01em;}
@@ -241,10 +234,22 @@
   .type-toggle button{flex:1;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-dim);
     border-radius:10px;padding:8px 0;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter';}
   .type-toggle button.active{background:var(--gold);color:#14131a;border-color:var(--gold);}
+
+  /* Settings rows + theme segmented control (You tab) */
+  .settings-label{font-size:12px;color:var(--ink-dim);font-weight:600;margin:0 0 8px;letter-spacing:.01em;}
+  .seg{display:flex;gap:6px;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:12px;padding:4px;}
+  .seg button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+    background:none;border:none;color:var(--ink-dim);font-size:12px;font-weight:600;font-family:'Inter';
+    border-radius:9px;padding:9px 0;cursor:pointer;transition:background .18s ease,color .18s ease;}
+  .seg button svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.8;fill:none;
+    stroke-linecap:round;stroke-linejoin:round;}
+  .seg button:hover{color:var(--ink);}
+  .seg button.active{background:var(--surface);color:var(--gold);
+    box-shadow:0 1px 4px rgba(0,0,0,.08);}
 </style>
 </head>
 <body>
-<button id="themeToggle" type="button" aria-label="Toggle light or dark mode" title="Toggle theme">🌙</button>
 <div class="frame" id="frame">
   <div class="spin" id="loading">Loading…</div>
 </div>
@@ -252,48 +257,55 @@
 
 <script>
 // ============================================================
-// THEME TOGGLE — light / dark with manual override + system default.
+// THEME — light / dark / system, with manual override persisted.
+// Exposes a small global API used by the You tab's segmented control.
 // ============================================================
-(function () {
+var Theme = (function () {
   var root = document.documentElement;
-  var btn = document.getElementById('themeToggle');
   var media = window.matchMedia('(prefers-color-scheme: dark)');
 
   function stored() {
     try { return localStorage.getItem('tether-theme'); } catch (e) { return null; }
   }
-  function effectiveTheme() {
+  // What the user picked: 'light' | 'dark' | 'system'
+  function preference() {
+    var s = stored();
+    return (s === 'light' || s === 'dark') ? s : 'system';
+  }
+  // What's actually showing right now: 'light' | 'dark'
+  function effective() {
     var s = stored();
     if (s === 'light' || s === 'dark') return s;
     return media.matches ? 'dark' : 'light';
   }
-  function paint() {
-    var t = effectiveTheme();
-    // Icon shows the mode you'd switch TO.
-    btn.textContent = t === 'dark' ? '☀️' : '🌙';
-    btn.setAttribute('aria-label', t === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
-    var meta = document.querySelector('meta[name="theme-color"]:not([media])') || (function () {
-      var m = document.createElement('meta');
-      m.name = 'theme-color';
-      document.head.appendChild(m);
-      return m;
-    })();
-    meta.setAttribute('content', t === 'dark' ? '#14121c' : '#faf7fd');
+  function applyMeta() {
+    var meta = document.querySelector('meta[name="theme-color"]:not([media])');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', effective() === 'dark' ? '#14121c' : '#faf7fd');
+  }
+  function set(mode) {
+    if (mode === 'light' || mode === 'dark') {
+      try { localStorage.setItem('tether-theme', mode); } catch (e) {}
+      root.setAttribute('data-theme', mode);
+    } else {
+      try { localStorage.removeItem('tether-theme'); } catch (e) {}
+      root.removeAttribute('data-theme');
+    }
+    applyMeta();
+    if (typeof Theme !== 'undefined' && Theme.onChange) Theme.onChange(preference());
   }
 
-  btn.addEventListener('click', function () {
-    var next = effectiveTheme() === 'dark' ? 'light' : 'dark';
-    try { localStorage.setItem('tether-theme', next); } catch (e) {}
-    root.setAttribute('data-theme', next);
-    paint();
-  });
-
-  // If the user hasn't chosen manually, follow system changes live.
+  // Follow OS changes live while on 'system'.
   media.addEventListener('change', function () {
-    if (!stored()) { root.removeAttribute('data-theme'); paint(); }
+    if (preference() === 'system') { applyMeta(); if (Theme.onChange) Theme.onChange('system'); }
   });
 
-  paint();
+  applyMeta();
+  return { preference: preference, effective: effective, set: set, onChange: null };
 })();
 
 // ============================================================
@@ -907,8 +919,36 @@ function renderYouTab(){
       <div class="goal-name">${esc(profile.display_name)}</div>
       <div class="goal-meta" style="margin-top:6px;">Paired and syncing</div>
     </div>
+    <div class="card">
+      <p class="settings-label">Appearance</p>
+      <div class="seg" id="themeSeg" role="group" aria-label="Theme">
+        <button data-theme-choice="light" type="button" aria-label="Light theme">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7"/></svg>
+          Light
+        </button>
+        <button data-theme-choice="dark" type="button" aria-label="Dark theme">
+          <svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 7 7 0 1 0 20 14.5z"/></svg>
+          Dark
+        </button>
+        <button data-theme-choice="system" type="button" aria-label="Match system theme">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12.5" rx="1.5"/><path d="M8.5 20.5h7M12 16.5v4"/></svg>
+          System
+        </button>
+      </div>
+    </div>
     <button class="btn ghost" id="youSignOut">Sign out</button>
   `;
+
+  const seg = document.getElementById('themeSeg');
+  function paintSeg(pref){
+    seg.querySelectorAll('button').forEach(b =>
+      b.classList.toggle('active', b.dataset.themeChoice === pref));
+  }
+  paintSeg(Theme.preference());
+  Theme.onChange = paintSeg;
+  seg.querySelectorAll('button').forEach(b =>
+    b.onclick = () => Theme.set(b.dataset.themeChoice));
+
   document.getElementById('youSignOut').onclick = async () => { await sb.auth.signOut(); };
 }
 
