@@ -145,7 +145,7 @@
   .hidden{display:none !important;}
   .tab-panel{display:none;}
   .tab-panel.active{display:block;}
-  .resolve-note{font-size:11.5px;color:var(--ink-dim);margin:-16px 0 20px;line-height:1.5;}
+  .resolve-note{font-size:11.5px;color:var(--ink-dim);margin:10px 0 20px;line-height:1.5;}
   .type-toggle{display:flex;gap:8px;margin-top:6px;}
   .type-toggle button{flex:1;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-dim);
     border-radius:10px;padding:8px 0;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter';}
@@ -163,8 +163,8 @@
 // CONFIG — fill these in from Supabase project settings, then
 // run schema.sql once in the SQL editor before first use.
 // ============================================================
-const SUPABASE_URL = 'https://fvsenkqyrnkmhfvmqkap.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_IBad3ywf6jorxCSHRVTzbQ_5rfSEBdu';
+const SUPABASE_URL = 'https://YOUR-PROJECT.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -316,7 +316,7 @@ async function renderWaiting(){
 // ============================================================
 async function renderApp(){
   frame.innerHTML = `
-    <p class="eyebrow">Anchor · ${esc(profile.display_name)}</p>
+    <p class="eyebrow">Tether · ${esc(profile.display_name)}</p>
     <h1 id="pageTitle">Today, together.</h1>
     <div id="panelToday" class="tab-panel active"></div>
     <div id="panelGoals" class="tab-panel"></div>
@@ -400,8 +400,8 @@ async function renderToday(){
     </div>
     <p class="section-title">Today's goals</p>
     <div id="todayGoals"></div>
-    <button class="btn ghost" id="btnResolve">Resolve yesterday →</button>
-    <p class="resolve-note">Run this once a day (e.g. each morning) to lock in yesterday's results. Anything left unmarked from yesterday counts as missed, and its stake moves into your partner's pool.</p>
+    <button class="btn ghost" id="btnResolve">End day →</button>
+    <p class="resolve-note">Run this once, at the end of the night, after you've checked off what you got done. Anything left unmarked counts as missed, and its stake moves into your partner's pool.</p>
   `;
   const list = document.getElementById('todayGoals');
   if (goals.length === 0){
@@ -414,7 +414,7 @@ async function renderToday(){
       list.appendChild(renderSingleGoal(g, checkinMap));
     }
   });
-  document.getElementById('btnResolve').onclick = resolveYesterday;
+  document.getElementById('btnResolve').onclick = resolveToday;
 }
 
 function renderSingleGoal(g, checkinMap){
@@ -507,10 +507,10 @@ async function setCheckin(goalId, itemId, status){
   if (error) showToast('Could not save: ' + error.message);
 }
 
-async function resolveYesterday(){
-  const { error } = await sb.rpc('resolve_day');
+async function resolveToday(){
+  const { error } = await sb.rpc('resolve_day', { p_date: todayStr() });
   if (error){ showToast('Could not resolve: ' + error.message); return; }
-  showToast('Resolved — pools only move when something was missed');
+  showToast('Day resolved — pools only move when something was missed');
   await renderToday();
 }
 
