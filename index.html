@@ -11,13 +11,49 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <style>
-  :root{
-    --bg:#14131a; --surface:#1c1a24; --surface-2:#242130;
-    --ink:#f2ede4; --ink-dim:#948da3;
-    --gold:#d4a574; --gold-dim:#3a3226;
-    --sage:#8aa792; --sage-dim:#293029;
-    --rust:#b5654a; --line:#302d3a; --radius:20px;
+:root {
+  color-scheme: light dark;
+
+  /* LIGHT */
+  --bg: #f8f6fb;
+  --surface: #ffffff;
+  --surface-2: #f2eef8;
+
+  --ink: #1f1b2d;
+  --ink-dim: #726b83;
+
+  --gold: #d78b63;
+  --gold-dim: #f5e6dc;
+
+  --sage: #8da59d;
+  --sage-dim: #dce8e4;
+
+  --rust: #d97d5b;
+  --line: #e8e2ef;
+
+  --radius: 20px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+
+    --bg:#14131a;
+    --surface:#1c1a24;
+    --surface-2:#242130;
+
+    --ink:#f2ede4;
+    --ink-dim:#948da3;
+
+    --gold:#d4a574;
+    --gold-dim:#3a3226;
+
+    --sage:#8aa792;
+    --sage-dim:#293029;
+
+    --rust:#b5654a;
+    --line:#302d3a;
   }
+}  
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--ink);
     font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
@@ -33,7 +69,7 @@
   input:focus,select:focus{outline:none;border-color:var(--gold);}
   .btn{width:100%;border:none;border-radius:12px;padding:13px 0;font-size:14.5px;font-weight:700;
     cursor:pointer;font-family:'Inter';margin-top:18px;}
-  .btn.primary{background:var(--gold);color:#14131a;}
+  .btn.primary{background:var(--gold);color:var(--bg);}
   .btn.ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);}
   .btn.small{width:auto;margin-top:0;padding:9px 14px;font-size:13px;}
   .link-btn{background:none;border:none;color:var(--gold);font-size:13px;cursor:pointer;
@@ -50,7 +86,7 @@
     border:1px solid var(--line);border-radius:var(--radius);padding:22px 18px 16px;margin-bottom:24px;}
   .vessel-wrap{flex:1;display:flex;flex-direction:column;align-items:center;max-width:140px;margin:0 auto;}
   .vessel{width:56px;height:110px;border:1.5px solid var(--line);border-radius:0 0 14px 14px;
-    border-top:none;position:relative;overflow:hidden;background:#100f15;}
+    border-top:none;position:relative;overflow:hidden;background:var(--surface-2);}
   .vessel .liquid{position:absolute;bottom:0;left:0;width:100%;
     transition:height .7s cubic-bezier(.22,1,.36,1);border-radius:0 0 12px 12px;
     background:linear-gradient(180deg,#e7c197,var(--gold));}
@@ -130,7 +166,8 @@
     padding:5px 10px;font-size:12px;display:flex;align-items:center;gap:6px;}
   .chip button{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:12px;padding:0;}
 
-  .tabbar{position:fixed;bottom:0;left:0;right:0;background:#0d0c11;border-top:1px solid var(--line);
+  .tabbar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);backdrop-filter:blur(24px);
+    border-top:1px solid var(--line);;border-top:1px solid var(--line);
     display:flex;max-width:430px;margin:0 auto;padding-bottom:env(safe-area-inset-bottom);}
   .tabbar button{flex:1;background:none;border:none;color:var(--ink-dim);font-size:11px;font-weight:600;
     padding:12px 0 10px;cursor:pointer;font-family:'Inter';display:flex;flex-direction:column;
