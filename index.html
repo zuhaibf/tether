@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
 <style>
   :root{
     --bg:#14131a; --surface:#1c1a24; --surface-2:#242130;
@@ -160,11 +161,17 @@
 
 <script>
 // ============================================================
-// CONFIG — fill these in from Supabase project settings, then
-// run schema.sql once in the SQL editor before first use.
+// CONFIG — pulled from config.js (see config.example.js for the template).
+// Run schema.sql once in the Supabase SQL editor before first use.
 // ============================================================
-const SUPABASE_URL = 'https://YOUR-PROJECT.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
+const SUPABASE_URL = window.TETHER_CONFIG?.SUPABASE_URL;
+const SUPABASE_ANON_KEY = window.TETHER_CONFIG?.SUPABASE_ANON_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL.includes('YOUR-PROJECT')) {
+  document.getElementById('frame').innerHTML =
+    '<div class="spin">config.js is missing your Supabase URL/key — see config.example.js.</div>';
+  throw new Error('Tether: config.js not set up yet');
+}
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
