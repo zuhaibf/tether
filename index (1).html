@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14131a">
+<title>Anchor</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#14131a; --surface:#1c1a24; --surface-2:#242130;
+    --ink:#f2ede4; --ink-dim:#948da3;
+    --gold:#d4a574; --gold-dim:#3a3226;
+    --sage:#8aa792; --sage-dim:#293029;
+    --rust:#b5654a; --line:#302d3a; --radius:20px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .frame{max-width:430px;margin:0 auto;min-height:100vh;padding:28px 20px 110px;position:relative;}
+  .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim);margin:0 0 2px;}
+  h1{font-family:'Fraunces',serif;font-weight:500;font-size:28px;margin:0 0 22px;letter-spacing:-.01em;}
+  h2{font-family:'Fraunces',serif;font-weight:500;font-size:20px;margin:0 0 14px;}
+  p.sub{font-size:13px;color:var(--ink-dim);line-height:1.5;margin:0 0 20px;}
+
+  label{display:block;font-size:12px;color:var(--ink-dim);margin:14px 0 6px;font-weight:600;}
+  input,select{width:100%;background:var(--surface);border:1px solid var(--line);color:var(--ink);
+    border-radius:12px;padding:12px 14px;font-size:14.5px;font-family:'Inter';}
+  input:focus,select:focus{outline:none;border-color:var(--gold);}
+  .btn{width:100%;border:none;border-radius:12px;padding:13px 0;font-size:14.5px;font-weight:700;
+    cursor:pointer;font-family:'Inter';margin-top:18px;}
+  .btn.primary{background:var(--gold);color:#14131a;}
+  .btn.ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);}
+  .btn.small{width:auto;margin-top:0;padding:9px 14px;font-size:13px;}
+  .link-btn{background:none;border:none;color:var(--gold);font-size:13px;cursor:pointer;
+    font-family:'Inter';padding:0;margin-top:16px;text-decoration:underline;}
+  .err{background:rgba(181,101,74,.15);color:#e19c85;border:1px solid rgba(181,101,74,.3);
+    border-radius:10px;padding:10px 12px;font-size:13px;margin-top:14px;}
+  .code-box{font-family:'Fraunces',serif;font-size:32px;letter-spacing:.08em;text-align:center;
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 0;margin:18px 0;color:var(--gold);}
+  .spin{display:flex;align-items:center;justify-content:center;min-height:60vh;color:var(--ink-dim);font-size:13px;}
+
+  .pool-delta{font-size:11.5px;color:var(--ink-dim);margin-top:6px;font-weight:600;}
+  .pool-delta.up{color:var(--gold);}
+  .pools{display:flex;align-items:flex-end;justify-content:center;background:var(--surface);
+    border:1px solid var(--line);border-radius:var(--radius);padding:22px 18px 16px;margin-bottom:24px;}
+  .vessel-wrap{flex:1;display:flex;flex-direction:column;align-items:center;max-width:140px;margin:0 auto;}
+  .vessel{width:56px;height:110px;border:1.5px solid var(--line);border-radius:0 0 14px 14px;
+    border-top:none;position:relative;overflow:hidden;background:#100f15;}
+  .vessel .liquid{position:absolute;bottom:0;left:0;width:100%;
+    transition:height .7s cubic-bezier(.22,1,.36,1);border-radius:0 0 12px 12px;
+    background:linear-gradient(180deg,#e7c197,var(--gold));}
+  .vessel-label{margin-top:10px;font-size:12px;color:var(--ink-dim);font-weight:600;}
+  .vessel-amt{font-family:'Fraunces',serif;font-size:20px;margin-top:2px;}
+
+  .section-title{font-size:13px;font-weight:600;color:var(--ink-dim);letter-spacing:.02em;
+    margin:26px 0 10px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;}
+  .section-title button{background:none;border:none;color:var(--gold);font-size:12px;font-weight:700;
+    cursor:pointer;font-family:'Inter';text-transform:none;letter-spacing:0;}
+
+  .goal{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;padding:12px 14px;margin-bottom:8px;}
+  .goal.exempt{opacity:.45;}
+  .check{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--ink-dim);flex-shrink:0;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;background:none;}
+  .check.done{background:var(--gold);border-color:var(--gold);}
+  .check.missed{background:var(--surface-2);border-color:var(--rust);}
+  .check svg{width:13px;height:13px;stroke:#14131a;stroke-width:3;fill:none;
+    stroke-linecap:round;stroke-linejoin:round;opacity:0;}
+  .check.done svg{opacity:1;}
+  .goal-main{flex:1;min-width:0;}
+  .goal-name{font-size:14.5px;font-weight:600;}
+  .goal-meta{font-size:11.5px;color:var(--ink-dim);margin-top:2px;display:flex;gap:8px;align-items:center;}
+  .flame{color:var(--gold);}
+  .stake-tag{font-family:'Fraunces',serif;font-size:13px;color:var(--ink-dim);white-space:nowrap;}
+  .exempt-btn,.archive-btn{background:none;border:none;color:var(--ink-dim);font-size:16px;
+    cursor:pointer;padding:2px 6px;flex-shrink:0;}
+
+  .goal.grouped{flex-direction:column;align-items:stretch;gap:0;}
+  .goal-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .goal-head .goal-main{flex:1;}
+  .sub-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--line);}
+  .sub-row:first-child{border-top:none;}
+  .sub-check{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--ink-dim);flex-shrink:0;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;background:none;}
+  .sub-check.done{background:var(--gold);border-color:var(--gold);}
+  .sub-check.missed{background:var(--surface-2);border-color:var(--rust);}
+  .sub-check svg{width:11px;height:11px;stroke:#14131a;stroke-width:3;fill:none;
+    stroke-linecap:round;stroke-linejoin:round;opacity:0;}
+  .sub-check.done svg{opacity:1;}
+  .sub-name{flex:1;font-size:13.5px;}
+  .sub-stake{font-family:'Fraunces',serif;font-size:12px;color:var(--ink-dim);}
+
+  .status-pill{font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+    padding:3px 8px;border-radius:999px;flex-shrink:0;}
+  .status-pill.missed{background:rgba(181,101,74,.18);color:var(--rust);}
+  .status-pill.paused{background:var(--surface-2);color:var(--ink-dim);}
+
+  .wish,.owed{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;padding:12px 14px;margin-bottom:8px;}
+  .wish-thumb,.owed-thumb{width:40px;height:40px;border-radius:10px;background:var(--surface-2);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:17px;}
+  .wish-main,.owed-main{flex:1;min-width:0;}
+  .wish-name,.owed-name{font-size:14px;font-weight:600;}
+  .wish-bar-track{height:5px;background:var(--surface-2);border-radius:3px;margin-top:7px;overflow:hidden;}
+  .wish-bar-fill{height:100%;background:var(--gold);border-radius:3px;transition:width .5s;}
+  .wish-price,.owed-sub{font-size:11px;color:var(--ink-dim);margin-top:5px;}
+  .redeem{border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;
+    flex-shrink:0;font-family:'Inter';}
+  .redeem.ready{background:var(--gold);color:#14131a;}
+  .redeem.locked{background:var(--surface-2);color:var(--ink-dim);cursor:not-allowed;}
+  .owed-pill{font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+    padding:3px 8px;border-radius:999px;white-space:nowrap;margin-top:5px;display:inline-block;}
+  .owed-pill.waiting{background:var(--gold-dim);color:var(--gold);}
+  .owed-pill.acked{background:var(--sage-dim);color:var(--sage);}
+  .owed-pill.remind{background:rgba(181,101,74,.18);color:var(--rust);}
+  .owed-btn{border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;
+    flex-shrink:0;font-family:'Inter';background:var(--surface-2);color:var(--ink);}
+  .owed-btn.primary{background:var(--gold);color:#14131a;}
+  .empty-note{font-size:12.5px;color:var(--ink-dim);padding:6px 2px 2px;}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;}
+  .card .row{display:flex;justify-content:space-between;align-items:center;}
+  .checklist-items{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .chip{background:var(--surface-2);border:1px solid var(--line);border-radius:999px;
+    padding:5px 10px;font-size:12px;display:flex;align-items:center;gap:6px;}
+  .chip button{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:12px;padding:0;}
+
+  .tabbar{position:fixed;bottom:0;left:0;right:0;background:#0d0c11;border-top:1px solid var(--line);
+    display:flex;max-width:430px;margin:0 auto;padding-bottom:env(safe-area-inset-bottom);}
+  .tabbar button{flex:1;background:none;border:none;color:var(--ink-dim);font-size:11px;font-weight:600;
+    padding:12px 0 10px;cursor:pointer;font-family:'Inter';display:flex;flex-direction:column;
+    align-items:center;gap:4px;}
+  .tabbar button.active{color:var(--gold);}
+  .tabbar svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;}
+
+  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-12px);
+    background:var(--surface-2);border:1px solid var(--line);color:var(--ink);padding:9px 16px;
+    border-radius:999px;font-size:12.5px;font-weight:600;opacity:0;transition:.3s;pointer-events:none;
+    z-index:20;max-width:90%;text-align:center;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .hidden{display:none !important;}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+  .resolve-note{font-size:11.5px;color:var(--ink-dim);margin:-16px 0 20px;line-height:1.5;}
+  .type-toggle{display:flex;gap:8px;margin-top:6px;}
+  .type-toggle button{flex:1;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-dim);
+    border-radius:10px;padding:8px 0;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter';}
+  .type-toggle button.active{background:var(--gold);color:#14131a;border-color:var(--gold);}
+</style>
+</head>
+<body>
+<div class="frame" id="frame">
+  <div class="spin" id="loading">Loading…</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIG — fill these in from Supabase project settings, then
+// run schema.sql once in the SQL editor before first use.
+// ============================================================
+const SUPABASE_URL = 'https://YOUR-PROJECT.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const frame = document.getElementById('frame');
+const CADENCE_FACTOR = { daily: 1, weekly: 2.2, monthly: 4 };
+
+let me = null;          // auth user
+let profile = null;     // profiles row
+let paired = false;
+let activeTab = 'today';
+let today = { goals: [], pool: 0 };
+
+function esc(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+// ---------- boot ----------
+async function boot(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session){ renderAuth(); return; }
+  me = session.user;
+  await loadProfile();
+}
+
+sb.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_OUT'){ me = null; profile = null; renderAuth(); }
+});
+
+async function loadProfile(){
+  const { data, error } = await sb.from('profiles').select('*').eq('id', me.id).single();
+  if (error){ renderAuth(); return; }
+  profile = data;
+  if (!profile.couple_id){ renderPairing(); return; }
+  const { data: joined } = await sb.rpc('partner_joined');
+  paired = !!joined;
+  if (!paired){ renderWaiting(); return; }
+  await renderApp();
+}
+
+// ============================================================
+// AUTH SCREENS
+// ============================================================
+function renderAuth(){
+  frame.innerHTML = `
+    <p class="eyebrow">Anchor</p>
+    <h1>We're keeping<br>each other honest.</h1>
+    <div id="authForm">
+      <label>Display name</label>
+      <input id="afName" placeholder="e.g. Zuhaib" />
+      <label>Email</label>
+      <input id="afEmail" type="email" placeholder="you@example.com" />
+      <label>Password</label>
+      <input id="afPass" type="password" placeholder="At least 6 characters" />
+      <button class="btn primary" id="afSubmit">Create account</button>
+      <button class="link-btn" id="afToggle">Already have an account? Sign in</button>
+      <div id="afErr"></div>
+    </div>
+  `;
+  let mode = 'signup';
+  const nameField = document.querySelector('#afName').parentElement.previousElementSibling ? null : null;
+  document.getElementById('afToggle').onclick = () => {
+    mode = mode === 'signup' ? 'signin' : 'signup';
+    document.getElementById('afSubmit').textContent = mode === 'signup' ? 'Create account' : 'Sign in';
+    document.getElementById('afToggle').textContent = mode === 'signup'
+      ? 'Already have an account? Sign in' : "New here? Create an account";
+    document.getElementById('afName').closest('label') ;
+    document.querySelectorAll('#authForm label')[0].style.display = mode === 'signup' ? 'block' : 'none';
+    document.getElementById('afName').style.display = mode === 'signup' ? 'block' : 'none';
+  };
+  document.getElementById('afSubmit').onclick = async () => {
+    const email = document.getElementById('afEmail').value.trim();
+    const pass = document.getElementById('afPass').value;
+    const name = document.getElementById('afName').value.trim();
+    const errEl = document.getElementById('afErr');
+    errEl.innerHTML = '';
+    if (!email || !pass || (mode === 'signup' && !name)){
+      errEl.innerHTML = '<div class="err">Please fill in every field.</div>'; return;
+    }
+    if (mode === 'signup'){
+      const { data, error } = await sb.auth.signUp({
+        email, password: pass, options: { data: { display_name: name } }
+      });
+      if (error){ errEl.innerHTML = `<div class="err">${esc(error.message)}</div>`; return; }
+      if (!data.session){
+        errEl.innerHTML = '<div class="err">Check your email to confirm, then sign in.</div>';
+        return;
+      }
+      me = data.user; await loadProfile();
+    } else {
+      const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+      if (error){ errEl.innerHTML = `<div class="err">${esc(error.message)}</div>`; return; }
+      me = data.user; await loadProfile();
+    }
+  };
+}
+
+// ============================================================
+// PAIRING SCREENS
+// ============================================================
+function renderPairing(){
+  frame.innerHTML = `
+    <p class="eyebrow">Step 2</p>
+    <h1>Pair with your partner.</h1>
+    <p class="sub">One of you creates an invite code, the other enters it. Once paired, your accounts are linked — but each of you only ever sees your own goals and pool.</p>
+    <button class="btn primary" id="pCreate">Create an invite code</button>
+    <label style="margin-top:24px;">Have a code already?</label>
+    <input id="pCode" placeholder="Enter 6-character code" style="text-transform:uppercase;" />
+    <button class="btn ghost" id="pJoin">Join with code</button>
+    <div id="pErr"></div>
+  `;
+  document.getElementById('pCreate').onclick = async () => {
+    const { data, error } = await sb.rpc('create_couple');
+    if (error){ document.getElementById('pErr').innerHTML = `<div class="err">${esc(error.message)}</div>`; return; }
+    await loadProfile();
+  };
+  document.getElementById('pJoin').onclick = async () => {
+    const code = document.getElementById('pCode').value.trim();
+    if (!code) return;
+    const { error } = await sb.rpc('join_couple', { p_code: code });
+    if (error){ document.getElementById('pErr').innerHTML = `<div class="err">${esc(error.message)}</div>`; return; }
+    await loadProfile();
+  };
+}
+
+async function renderWaiting(){
+  const { data: code } = await sb.rpc('my_invite_code');
+  frame.innerHTML = `
+    <p class="eyebrow">Waiting</p>
+    <h1>Share this code.</h1>
+    <p class="sub">Send it to your partner — once they enter it, you'll both land on Anchor together.</p>
+    <div class="code-box">${esc(code || '——————')}</div>
+    <button class="btn ghost" id="wRefresh">I've sent it — check again</button>
+    <button class="link-btn" id="wSignOut">Sign out</button>
+  `;
+  document.getElementById('wRefresh').onclick = loadProfile;
+  document.getElementById('wSignOut').onclick = async () => { await sb.auth.signOut(); };
+}
+
+// ============================================================
+// MAIN APP
+// ============================================================
+async function renderApp(){
+  frame.innerHTML = `
+    <p class="eyebrow">Anchor · ${esc(profile.display_name)}</p>
+    <h1 id="pageTitle">Today, together.</h1>
+    <div id="panelToday" class="tab-panel active"></div>
+    <div id="panelGoals" class="tab-panel"></div>
+    <div id="panelWishlist" class="tab-panel"></div>
+    <div id="panelOwed" class="tab-panel"></div>
+    <div id="panelYou" class="tab-panel"></div>
+  `;
+  const nav = document.createElement('div');
+  nav.className = 'tabbar';
+  nav.innerHTML = `
+    <button data-tab="today" class="active">
+      <svg viewBox="0 0 24 24"><path d="M4 21V9l8-6 8 6v12"/><path d="M9 21v-8h6v8"/></svg>Today</button>
+    <button data-tab="goals">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>Goals</button>
+    <button data-tab="wishlist">
+      <svg viewBox="0 0 24 24"><path d="M20 8h-3.2a2.5 2.5 0 0 0 .2-1 2.5 2.5 0 0 0-4.5-1.5L12 6l-.5-.5A2.5 2.5 0 0 0 7 7a2.5 2.5 0 0 0 .2 1H4v4h16z"/><path d="M4 12v8h16v-8"/></svg>Wishlist</button>
+    <button data-tab="owed">
+      <svg viewBox="0 0 24 24"><path d="M20 12v8H4v-8"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/></svg>Owed</button>
+    <button data-tab="you">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>You</button>
+  `;
+  document.body.appendChild(document.getElementById('toast'));
+  frame.appendChild(nav);
+  nav.querySelectorAll('button').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
+
+  await Promise.all([renderToday(), renderGoalsTab(), renderWishlistTab(), renderOwedTab()]);
+  renderYouTab();
+}
+
+function switchTab(tab){
+  activeTab = tab;
+  document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.getElementById('panelToday').classList.toggle('active', tab === 'today');
+  document.getElementById('panelGoals').classList.toggle('active', tab === 'goals');
+  document.getElementById('panelWishlist').classList.toggle('active', tab === 'wishlist');
+  document.getElementById('panelOwed').classList.toggle('active', tab === 'owed');
+  document.getElementById('panelYou').classList.toggle('active', tab === 'you');
+  document.getElementById('pageTitle').textContent = {
+    today: 'Today, together.', goals: 'Your goals.', wishlist: 'Wishlist.',
+    owed: 'What\u2019s owed.', you: 'Your account.'
+  }[tab];
+}
+
+// ---------- TODAY ----------
+function currentStake(weight, cadence, streak){
+  const mult = 1 + Math.min(streak, 20) * 0.03;
+  return Math.round(weight * (CADENCE_FACTOR[cadence] || 1) * mult * 10) / 10;
+}
+function itemStake(weight, streak){
+  const mult = 1 + Math.min(streak, 20) * 0.03;
+  return Math.round(weight * mult * 10) / 10;
+}
+
+async function fetchGoalsWithItems(){
+  const { data: goals } = await sb.from('goals').select('*').eq('archived', false).order('sort_order');
+  const { data: items } = await sb.from('goal_items').select('*').order('sort_order');
+  const { data: checkins } = await sb.from('checkins').select('*').eq('log_date', todayStr());
+  const itemsByGoal = {};
+  (items || []).forEach(it => { (itemsByGoal[it.goal_id] ||= []).push(it); });
+  const checkinMap = {};
+  (checkins || []).forEach(c => { checkinMap[c.goal_id + ':' + (c.item_id || 'null')] = c; });
+  return { goals: goals || [], itemsByGoal, checkinMap };
+}
+
+async function renderToday(){
+  const { data: p } = await sb.from('profiles').select('pool').eq('id', me.id).single();
+  const pool = p?.pool || 0;
+  const { goals, itemsByGoal, checkinMap } = await fetchGoalsWithItems();
+
+  const maxRef = Math.max(60, pool * 1.2);
+  const pct = Math.min(100, (pool / maxRef) * 100);
+
+  const panel = document.getElementById('panelToday');
+  panel.innerHTML = `
+    <div class="pools">
+      <div class="vessel-wrap">
+        <div class="vessel"><div class="liquid" style="height:${pct}%"></div></div>
+        <div class="vessel-label">Your pool</div>
+        <div class="vessel-amt">${pool.toFixed(1)}</div>
+      </div>
+    </div>
+    <p class="section-title">Today's goals</p>
+    <div id="todayGoals"></div>
+    <button class="btn ghost" id="btnResolve">Resolve yesterday →</button>
+    <p class="resolve-note">Run this once a day (e.g. each morning) to lock in yesterday's results. Anything left unmarked from yesterday counts as missed, and its stake moves into your partner's pool.</p>
+  `;
+  const list = document.getElementById('todayGoals');
+  if (goals.length === 0){
+    list.innerHTML = '<div class="empty-note">No goals yet — add one from the Goals tab.</div>';
+  }
+  goals.forEach(g => {
+    if (g.type === 'checklist'){
+      list.appendChild(renderChecklistGoal(g, itemsByGoal[g.id] || [], checkinMap));
+    } else {
+      list.appendChild(renderSingleGoal(g, checkinMap));
+    }
+  });
+  document.getElementById('btnResolve').onclick = resolveYesterday;
+}
+
+function renderSingleGoal(g, checkinMap){
+  const key = g.id + ':null';
+  const ci = checkinMap[key];
+  const status = ci ? ci.status : 'pending';
+  const row = document.createElement('div');
+  row.className = 'goal' + (status === 'exempt' ? ' exempt' : '');
+  let checkClass = 'check';
+  if (status === 'missed') checkClass += ' missed';
+  else if (status === 'done') checkClass += ' done';
+  const statusPill = status === 'exempt' ? '<span class="status-pill paused">Paused</span>'
+    : (status === 'missed' ? '<span class="status-pill missed">Missed</span>' : '');
+  row.innerHTML = `
+    <button class="${checkClass}" data-action="single" data-goal="${g.id}" ${status==='exempt'?'disabled':''}>
+      <svg viewBox="0 0 24 24"><polyline points="4,13 9,18 20,6"/></svg>
+    </button>
+    <div class="goal-main">
+      <div class="goal-name">${esc(g.name)}</div>
+      <div class="goal-meta">
+        <span>${esc(g.category)}</span>
+        ${g.streak > 0 ? `<span class="flame">🔥 ${g.streak}</span>` : ''}
+      </div>
+    </div>
+    ${statusPill}
+    <span class="stake-tag">±${currentStake(g.weight, g.cadence, g.streak)}</span>
+    <button class="exempt-btn" data-action="exempt" data-goal="${g.id}" title="Mark exempt for today">
+      ${status==='exempt' ? '↩' : '⏸'}
+    </button>
+  `;
+  return row;
+}
+
+function renderChecklistGoal(g, items, checkinMap){
+  const row = document.createElement('div');
+  row.className = 'goal grouped';
+  const head = document.createElement('div');
+  head.className = 'goal-head';
+  head.innerHTML = `
+    <div class="goal-main">
+      <div class="goal-name">${esc(g.name)}</div>
+      <div class="goal-meta"><span>${esc(g.category)}</span></div>
+    </div>
+  `;
+  row.appendChild(head);
+  items.forEach(it => {
+    const key = g.id + ':' + it.id;
+    const ci = checkinMap[key];
+    const status = ci ? ci.status : 'pending';
+    const sub = document.createElement('div');
+    sub.className = 'sub-row';
+    let checkClass = 'sub-check';
+    if (status === 'missed') checkClass += ' missed';
+    else if (status === 'done') checkClass += ' done';
+    sub.innerHTML = `
+      <button class="${checkClass}" data-action="sub" data-goal="${g.id}" data-item="${it.id}">
+        <svg viewBox="0 0 24 24"><polyline points="4,13 9,18 20,6"/></svg>
+      </button>
+      <span class="sub-name">${esc(it.name)}</span>
+      <span class="sub-stake">±${itemStake(it.weight, it.streak)}</span>
+    `;
+    row.appendChild(sub);
+  });
+  return row;
+}
+
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn || !document.getElementById('panelToday')?.contains(btn)) return;
+  const action = btn.dataset.action;
+  const goalId = btn.dataset.goal;
+  if (action === 'single'){
+    await setCheckin(goalId, null, 'done');
+  } else if (action === 'sub'){
+    await setCheckin(goalId, btn.dataset.item, 'done');
+  } else if (action === 'exempt'){
+    const isPaused = btn.textContent.trim() === '↩';
+    await setCheckin(goalId, null, isPaused ? 'pending' : 'exempt');
+  }
+  await renderToday();
+});
+
+async function setCheckin(goalId, itemId, status){
+  const payload = {
+    owner_id: me.id, goal_id: goalId, item_id: itemId,
+    log_date: todayStr(), status
+  };
+  const { error } = await sb.from('checkins')
+    .upsert(payload, { onConflict: 'goal_id,item_id,log_date' });
+  if (error) showToast('Could not save: ' + error.message);
+}
+
+async function resolveYesterday(){
+  const { error } = await sb.rpc('resolve_day');
+  if (error){ showToast('Could not resolve: ' + error.message); return; }
+  showToast('Resolved — pools only move when something was missed');
+  await renderToday();
+}
+
+// ---------- GOALS TAB ----------
+async function renderGoalsTab(){
+  const { data: goals } = await sb.from('goals').select('*').eq('archived', false).order('sort_order');
+  const { data: items } = await sb.from('goal_items').select('*').order('sort_order');
+  const itemsByGoal = {};
+  (items || []).forEach(it => { (itemsByGoal[it.goal_id] ||= []).push(it); });
+
+  const panel = document.getElementById('panelGoals');
+  panel.innerHTML = `
+    <p class="section-title">Manage <button id="btnAddGoal">+ Add goal</button></p>
+    <div id="goalCards"></div>
+  `;
+  const cards = document.getElementById('goalCards');
+  if (!goals || goals.length === 0){
+    cards.innerHTML = '<div class="empty-note">No goals yet.</div>';
+  }
+  (goals || []).forEach(g => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    const subItems = (itemsByGoal[g.id] || []).map(it =>
+      `<span class="chip">${esc(it.name)}</span>`).join('');
+    card.innerHTML = `
+      <div class="row">
+        <div>
+          <div class="goal-name">${esc(g.name)}</div>
+          <div class="goal-meta"><span>${esc(g.category)}</span><span>· ${esc(g.cadence)}</span>
+          ${g.type === 'single' ? `<span>· weight ${g.weight}</span>` : ''}</div>
+        </div>
+        <button class="archive-btn" data-action="archive-goal" data-id="${g.id}" title="Archive">🗑</button>
+      </div>
+      ${g.type === 'checklist' ? `<div class="checklist-items">${subItems}</div>` : ''}
+    `;
+    cards.appendChild(card);
+  });
+  document.getElementById('btnAddGoal').onclick = showAddGoalForm;
+  cards.querySelectorAll('button[data-action="archive-goal"]').forEach(b => {
+    b.onclick = async () => {
+      await sb.from('goals').update({ archived: true }).eq('id', b.dataset.id);
+      await renderGoalsTab();
+      showToast('Goal archived');
+    };
+  });
+}
+
+function showAddGoalForm(){
+  const panel = document.getElementById('panelGoals');
+  const form = document.createElement('div');
+  form.className = 'card';
+  form.innerHTML = `
+    <label>Name</label>
+    <input id="ngName" placeholder="e.g. Gym session" />
+    <label>Category</label>
+    <input id="ngCategory" placeholder="e.g. Body, Faith, Mind, Discipline" />
+    <label>Type</label>
+    <div class="type-toggle">
+      <button type="button" class="active" data-type="single">Single</button>
+      <button type="button" data-type="checklist">Checklist</button>
+    </div>
+    <div id="ngSingleFields">
+      <label>Cadence</label>
+      <select id="ngCadence">
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+      </select>
+      <label>Weight (1\u20135, how much this matters to you as a couple)</label>
+      <input id="ngWeight" type="number" min="1" max="5" value="2" />
+    </div>
+    <div id="ngChecklistFields" class="hidden">
+      <label>Items (comma-separated, e.g. Fajr, Zuhr, Asr, Maghrib, Isha)</label>
+      <input id="ngItems" placeholder="Fajr, Zuhr, Asr, Maghrib, Isha" />
+    </div>
+    <button class="btn primary" id="ngSave">Save goal</button>
+    <button class="link-btn" id="ngCancel">Cancel</button>
+  `;
+  panel.insertBefore(form, panel.firstChild.nextSibling);
+  let type = 'single';
+  form.querySelectorAll('.type-toggle button').forEach(b => {
+    b.onclick = () => {
+      type = b.dataset.type;
+      form.querySelectorAll('.type-toggle button').forEach(x => x.classList.toggle('active', x === b));
+      document.getElementById('ngSingleFields').classList.toggle('hidden', type !== 'single');
+      document.getElementById('ngChecklistFields').classList.toggle('hidden', type !== 'checklist');
+    };
+  });
+  document.getElementById('ngCancel').onclick = () => form.remove();
+  document.getElementById('ngSave').onclick = async () => {
+    const name = document.getElementById('ngName').value.trim();
+    const category = document.getElementById('ngCategory').value.trim() || 'General';
+    if (!name){ showToast('Give the goal a name first'); return; }
+    if (type === 'single'){
+      const cadence = document.getElementById('ngCadence').value;
+      const weight = parseFloat(document.getElementById('ngWeight').value) || 2;
+      const { error } = await sb.from('goals').insert({
+        owner_id: me.id, name, category, cadence, weight, type: 'single'
+      });
+      if (error){ showToast(error.message); return; }
+    } else {
+      const raw = document.getElementById('ngItems').value.trim();
+      const names = raw.split(',').map(s => s.trim()).filter(Boolean);
+      if (names.length === 0){ showToast('Add at least one item'); return; }
+      const { data: goal, error } = await sb.from('goals').insert({
+        owner_id: me.id, name, category, cadence: 'daily', weight: 1, type: 'checklist'
+      }).select().single();
+      if (error){ showToast(error.message); return; }
+      const rows = names.map((n, i) => ({ goal_id: goal.id, name: n, weight: 1, sort_order: i }));
+      await sb.from('goal_items').insert(rows);
+    }
+    showToast('Goal added');
+    await renderGoalsTab();
+    await renderToday();
+  };
+}
+
+// ---------- WISHLIST TAB ----------
+async function renderWishlistTab(){
+  const { data: items } = await sb.from('wishlist_items').select('*').eq('archived', false).order('sort_order');
+  const { data: p } = await sb.from('profiles').select('pool').eq('id', me.id).single();
+  const pool = p?.pool || 0;
+
+  const panel = document.getElementById('panelWishlist');
+  panel.innerHTML = `
+    <p class="section-title">Wishlist <button id="btnAddWish">+ Add item</button></p>
+    <div id="wishCards"></div>
+  `;
+  const box = document.getElementById('wishCards');
+  if (!items || items.length === 0){
+    box.innerHTML = '<div class="empty-note">Nothing here yet — add something worth working toward.</div>';
+  }
+  (items || []).forEach(w => {
+    const pct = Math.min(100, (pool / w.threshold) * 100);
+    const ready = pool >= w.threshold;
+    const el = document.createElement('div');
+    el.className = 'wish';
+    el.innerHTML = `
+      <div class="wish-thumb">${esc(w.emoji)}</div>
+      <div class="wish-main">
+        <div class="wish-name">${esc(w.name)}</div>
+        <div class="wish-bar-track"><div class="wish-bar-fill" style="width:${pct}%"></div></div>
+        <div class="wish-price">${pool.toFixed(1)} / ${w.threshold} pts · Tier ${esc(w.tier)}</div>
+      </div>
+      <button class="redeem ${ready ? 'ready' : 'locked'}" data-id="${w.id}" ${ready ? '' : 'disabled'}>
+        ${ready ? 'Claim' : 'Locked'}
+      </button>
+    `;
+    box.appendChild(el);
+  });
+  box.querySelectorAll('button.redeem').forEach(b => {
+    b.onclick = async () => {
+      const { error } = await sb.rpc('claim_wishlist', { p_item_id: b.dataset.id });
+      if (error){ showToast(error.message); return; }
+      showToast('Claimed — your partner has been notified');
+      await renderWishlistTab();
+      await renderToday();
+      await renderOwedTab();
+    };
+  });
+  document.getElementById('btnAddWish').onclick = showAddWishForm;
+}
+
+function showAddWishForm(){
+  const panel = document.getElementById('panelWishlist');
+  const form = document.createElement('div');
+  form.className = 'card';
+  form.innerHTML = `
+    <label>Name</label>
+    <input id="nwName" placeholder="e.g. Leather watch strap" />
+    <label>Emoji</label>
+    <input id="nwEmoji" placeholder="⌚" value="🎁" maxlength="2" />
+    <label>Tier</label>
+    <select id="nwTier">
+      <option value="S">S</option>
+      <option value="M" selected>M</option>
+      <option value="L">L</option>
+      <option value="XL">XL</option>
+    </select>
+    <label>Points needed</label>
+    <input id="nwThreshold" type="number" min="1" value="30" />
+    <button class="btn primary" id="nwSave">Save item</button>
+    <button class="link-btn" id="nwCancel">Cancel</button>
+  `;
+  panel.insertBefore(form, panel.firstChild.nextSibling);
+  document.getElementById('nwCancel').onclick = () => form.remove();
+  document.getElementById('nwSave').onclick = async () => {
+    const name = document.getElementById('nwName').value.trim();
+    const emoji = document.getElementById('nwEmoji').value.trim() || '🎁';
+    const tier = document.getElementById('nwTier').value;
+    const threshold = parseFloat(document.getElementById('nwThreshold').value) || 30;
+    if (!name){ showToast('Give it a name first'); return; }
+    const { error } = await sb.from('wishlist_items').insert({
+      owner_id: me.id, name, emoji, tier, threshold
+    });
+    if (error){ showToast(error.message); return; }
+    showToast('Added to wishlist');
+    await renderWishlistTab();
+  };
+}
+
+// ---------- OWED TAB ----------
+async function renderOwedTab(){
+  const { data: rows } = await sb.from('owed_gifts').select('*')
+    .eq('fulfilled', false).order('claimed_at', { ascending: false });
+  const panel = document.getElementById('panelOwed');
+  panel.innerHTML = `<p class="section-title">Owed</p><div id="owedCards"></div>`;
+  const box = document.getElementById('owedCards');
+  if (!rows || rows.length === 0){
+    box.innerHTML = '<div class="empty-note">Nothing claimed yet.</div>';
+    return;
+  }
+  rows.forEach(o => {
+    const iAmOwer = o.owed_by === me.id;
+    let pillClass = 'waiting', pillText = 'Waiting on partner';
+    if (iAmOwer) { pillText = 'Waiting on you'; }
+    if (o.acknowledged) { pillClass = 'acked'; pillText = iAmOwer ? 'You acknowledged' : 'Acknowledged'; }
+    let actionBtn = '';
+    if (iAmOwer && !o.acknowledged) actionBtn = `<button class="owed-btn" data-action="ack" data-id="${o.id}">Got it</button>`;
+    else if (iAmOwer && o.acknowledged) actionBtn = `<button class="owed-btn primary" data-action="fulfill" data-id="${o.id}">Mark gifted</button>`;
+
+    const row = document.createElement('div');
+    row.className = 'owed';
+    row.innerHTML = `
+      <div class="owed-thumb">${esc(o.emoji)}</div>
+      <div class="owed-main">
+        <div class="owed-name">${esc(o.item_name)}</div>
+        <div class="owed-sub">${iAmOwer ? 'You owe this' : 'Owed to you'}</div>
+        <span class="owed-pill ${pillClass}">${pillText}</span>
+      </div>
+      ${actionBtn}
+    `;
+    box.appendChild(row);
+  });
+  box.querySelectorAll('button[data-action]').forEach(b => {
+    b.onclick = async () => {
+      const field = b.dataset.action === 'ack' ? { acknowledged: true } : { fulfilled: true };
+      const { error } = await sb.from('owed_gifts').update(field).eq('id', b.dataset.id);
+      if (error){ showToast(error.message); return; }
+      showToast(b.dataset.action === 'ack' ? 'Acknowledged' : 'Marked as gifted 🎁');
+      await renderOwedTab();
+    };
+  });
+}
+
+// ---------- YOU TAB ----------
+function renderYouTab(){
+  const panel = document.getElementById('panelYou');
+  panel.innerHTML = `
+    <div class="card">
+      <div class="goal-name">${esc(profile.display_name)}</div>
+      <div class="goal-meta" style="margin-top:6px;">Paired and syncing</div>
+    </div>
+    <button class="btn ghost" id="youSignOut">Sign out</button>
+  `;
+  document.getElementById('youSignOut').onclick = async () => { await sb.auth.signOut(); };
+}
+
+boot();
+</script>
+</body>
+</html>
